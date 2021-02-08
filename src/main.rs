@@ -7,7 +7,7 @@ use structopt::{
     StructOpt,
     clap::AppSettings,
     };
-use anyhow::Error;
+use anyhow::{bail, Error};
 use tera::{Context, Tera};
 use walkdir::{DirEntry, WalkDir};
 
@@ -38,6 +38,15 @@ fn compute_output_file(root: impl AsRef<Path>, relative: impl AsRef<Path>) -> Pa
     let mut b = dirs::get_output_dir(root);
     b.push(relative.as_ref());
     b
+}
+
+fn make_parent_if_necessary(path: impl AsRef<Path>) -> Result<(), Error> {
+    let parent = match path.as_ref().parent() {
+        Some(p) => p,
+        None => bail!("shouldn't be in root dir")
+    };
+    fs::create_dir_all(parent)?;
+    Ok(())
 }
 
 fn add_templates_from_dir(tera: &mut Tera, prefix: impl AsRef<Path>, template_root: impl AsRef<Path>) -> Result<(), Error> {
@@ -121,6 +130,7 @@ fn build() -> Result<(), Error> {
             let entry_name = entry.path().strip_prefix(&cwd)?.to_str().unwrap();
             let output_file = compute_output_file(&cwd, rel_path);
             let rendered_output = tera.render(&entry_name, &ctx)?;
+            make_parent_if_necessary(&output_file)?;
             fs::write(output_file, rendered_output)?;
         }
     }
@@ -138,6 +148,7 @@ fn build() -> Result<(), Error> {
                 b.push(&rel_path);
                 b
             };
+            make_parent_if_necessary(&new_path)?;
             fs::copy(entry.path(), &new_path)?;
         }
     }
