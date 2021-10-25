@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 tera = "1.7.0"
-structopt = "0.3.21"
+structopt = "0.3.25"
 anyhow = "1.0.40"
 walkdir = "2.3.2"
 toml = "0.5.8"
